@@ -46,7 +46,7 @@ class Settings(BaseSettings):
         # Render, Heroku, Neon… entregan postgres:// o postgresql:// → forzar el driver psycopg 3.
         for prefix in ("postgres://", "postgresql://"):
             if v.startswith(prefix):
-                return "postgresql+psycopg://" + v[len(prefix):]
+                return "postgresql+psycopg://" + v[len(prefix) :]
         return v
 
 

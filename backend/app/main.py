@@ -1,8 +1,8 @@
 import logging
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from sqlalchemy import text
 
 from app.ai.ocr import get_ocr_provider
