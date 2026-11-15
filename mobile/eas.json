@@ -8,11 +8,11 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.tudominio.es" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://ganaderia-api-qfz8.onrender.com" }
     },
     "production": {
       "autoIncrement": true,
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.tudominio.es" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://ganaderia-api-qfz8.onrender.com" }
     }
   },
   "submit": { "production": {} }

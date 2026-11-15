@@ -9,6 +9,5 @@ mobile/.expo/
 mobile/dist/
 mobile/ios/
 mobile/android/
-mobile/.env
 *.log
 .DS_Store
