@@ -1,0 +1,83 @@
+# Ganadería AI — entorno local / servidor pequeño
+#   cp .env.example .env   (y cambia las contraseñas)
+#   docker compose up -d --build
+#   docker compose exec api python -m scripts.seed_demo   (opcional: datos de ejemplo)
+#
+# API:     http://<IP-de-tu-ordenador>:8000/docs
+# MinIO:   http://localhost:9001 (consola)
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ganaderia}
+      POSTGRES_USER: ${POSTGRES_USER:-ganaderia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ganaderia} -d ${POSTGRES_DB:-ganaderia}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-ganaderia}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?Define S3_SECRET_KEY en .env}
+    volumes:
+      - miniodata:/data
+    ports:
+      - "127.0.0.1:9001:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ganaderia}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ganaderia}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env (32+ caracteres)}
+      STORAGE_BACKEND: s3
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET: ${S3_BUCKET:-ganaderia-photos}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-ganaderia}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      OCR_PROVIDER: ${OCR_PROVIDER:-tesseract}
+      GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY:-}
+      CORS_ORIGINS: '["*"]'
+    ports:
+      - "0.0.0.0:8000:8000"   # accesible desde el móvil en la misma wifi
+
+  # Fase 2: tareas programadas y avisos (vacunas, vencimientos).
+  #   docker compose --profile automation up -d
+  n8n:
+    image: n8nio/n8n:latest
+    profiles: ["automation"]
+    restart: unless-stopped
+    environment:
+      N8N_HOST: localhost
+      GENERIC_TIMEZONE: Europe/Madrid
+      TZ: Europe/Madrid
+    ports:
+      - "127.0.0.1:5678:5678"
+    volumes:
+      - n8ndata:/home/node/.n8n
+
+volumes:
+  pgdata:
+  miniodata:
+  n8ndata:

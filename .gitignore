@@ -1,0 +1,14 @@
+.env
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+backend/data/
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/ios/
+mobile/android/
+mobile/.env
+*.log
+.DS_Store

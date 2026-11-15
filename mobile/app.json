@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Ganadería AI",
+    "slug": "ganaderia-ai",
+    "version": "0.1.0",
+    "scheme": "ganaderia",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.ganaderia.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "La cámara se usa para fotografiar crotales e identificar animales.",
+        "NSPhotoLibraryUsageDescription": "Se accede a tus fotos para identificar animales o añadirlas a su ficha."
+      }
+    },
+    "android": {
+      "package": "ai.ganaderia.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1F5130",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "La cámara se usa para fotografiar crotales e identificar animales.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Se accede a tus fotos para identificar animales o añadirlas a su ficha."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

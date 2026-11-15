@@ -1,0 +1,42 @@
+# Despliegue de prueba GRATUITO en Render (https://render.com) — sin tarjeta.
+# Render → New → Blueprint → elige este repositorio.
+#
+# Limitaciones del plan gratuito (solo para probar):
+#   - El servidor se duerme tras 15 min sin uso; la primera petición tarda ~1 min en despertar.
+#   - La base de datos gratuita caduca a los 30 días.
+#   - Las fotos se guardan en el disco del contenedor y se pierden en cada redespliegue/reinicio.
+#   - 512 MB de RAM: el OCR tarda algo más que en local.
+
+databases:
+  - name: ganaderia-db
+    plan: free
+    region: frankfurt
+    databaseName: ganaderia
+    user: ganaderia
+
+services:
+  - type: web
+    name: ganaderia-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ganaderia-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: STORAGE_BACKEND
+        value: local
+      - key: LOCAL_STORAGE_DIR
+        value: /app/data/media
+      - key: OCR_PROVIDER
+        value: tesseract
+      - key: SEED_DEMO
+        value: "true"
