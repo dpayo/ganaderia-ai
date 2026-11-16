@@ -164,3 +164,18 @@ def test_sync_endpoint(client: TestClient, auth, farm) -> None:
     client.delete(f"{API}/farms/{farm}/animals/{a['id']}", headers=auth)
     delta2 = client.get(f"{API}/farms/{farm}/animals/sync", params={"since": delta["server_time"]}, headers=auth).json()
     assert delta2["items"][0]["deleted_at"] is not None
+
+
+def test_web_app_served(client: TestClient) -> None:
+    from app.main import WEB_DIR
+
+    if not (WEB_DIR / "index.html").is_file():
+        return
+    r = client.get("/")
+    assert r.status_code == 200 and "<html" in r.text.lower()
+    assert client.get("/animals").headers["content-type"].startswith("text/html")  # ruta del cliente
+    assert client.get("/api/v1/no-existe").status_code == 404
+    assert client.get("/health").json() == {"status": "ok"}
+    assert client.get("/docs").status_code == 200
+    assert client.get("/../app/main.py").status_code in (200, 404)
+    assert "fastapi" not in client.get("/..%2Fapp%2Fmain.py").text

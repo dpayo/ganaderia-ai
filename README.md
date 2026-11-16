@@ -4,6 +4,15 @@ Aplicación móvil (iOS y Android) para la gestión de explotaciones ganaderas c
 
 > **Estado: Fase 1 (MVP) completa.** Ganadería AI es una herramienta de gestión interna y **no sustituye** a los sistemas oficiales de identificación y trazabilidad (SITRAN, REGA, libro de explotación).
 
+
+## Usar la app desde el navegador (lo más fácil)
+
+Abre **https://ganaderia-api-qfz8.onrender.com** en el navegador del móvil (Safari o Chrome) y entra con `demo@ganaderia.ai` / `Demo1234!`.
+Para tenerla como una app: Compartir → **Añadir a pantalla de inicio** (iPhone) o menú ⋮ → **Añadir a pantalla de inicio** (Android).
+
+La versión web la sirve el propio backend desde `backend/web`. Tras cambiar la app, regenerarla con `./scripts/build_web.sh` y hacer push.
+La documentación de la API sigue en `/docs`.
+
 ## Qué incluye la Fase 1
 
 - Registro, inicio de sesión (JWT con renovación) y explotaciones con usuarios y roles.

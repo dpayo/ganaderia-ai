@@ -1,4 +1,4 @@
-import { api, imageForm } from './api';
+import { api, appendFile, imageForm } from './api';
 import type {
   ActivityItem,
   Animal,
@@ -67,17 +67,17 @@ export const Animals = {
     api<{ items: Animal[]; server_time: string }>(`/farms/${farmId}/animals/sync`, { query: { since } }),
   lookup: (farmId: string, code: string) =>
     api<Identification>(`/farms/${farmId}/animals/lookup`, { query: { code } }),
-  uploadPhoto: (farmId: string, id: string, uri: string, setAsMain = false) =>
+  uploadPhoto: async (farmId: string, id: string, uri: string, setAsMain = false) =>
     api<Photo>(`/farms/${farmId}/animals/${id}/photos`, {
       method: 'POST',
-      form: imageForm(uri, { kind: 'body', set_as_main: String(setAsMain) }),
+      form: await imageForm(uri, { kind: 'body', set_as_main: String(setAsMain) }),
       timeoutMs: 60000,
     }),
   deletePhoto: (farmId: string, photoId: string) =>
     api<void>(`/farms/${farmId}/photos/${photoId}`, { method: 'DELETE' }),
-  importFile: (farmId: string, uri: string, name: string, mime: string, dryRun: boolean) => {
+  importFile: async (farmId: string, uri: string, name: string, mime: string, dryRun: boolean, webFile?: Blob) => {
     const fd = new FormData();
-    fd.append('file', { uri, name, type: mime } as unknown as Blob);
+    await appendFile(fd, uri, name, mime, webFile);
     return api<ImportReport>(`/farms/${farmId}/animals/import`, {
       method: 'POST',
       form: fd,
@@ -88,8 +88,8 @@ export const Animals = {
 };
 
 export const Identify = {
-  photo: (farmId: string, uri: string) =>
-    api<Identification>(`/farms/${farmId}/identify`, { method: 'POST', form: imageForm(uri), timeoutMs: 60000 }),
+  photo: async (farmId: string, uri: string) =>
+    api<Identification>(`/farms/${farmId}/identify`, { method: 'POST', form: await imageForm(uri), timeoutMs: 90000 }),
   confirm: (farmId: string, identId: string, animalId: string, attachPhoto = true) =>
     api<void>(`/farms/${farmId}/identifications/${identId}/confirm`, {
       method: 'POST',

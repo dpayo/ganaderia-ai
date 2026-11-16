@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
+
+import { showAlert } from '@/lib/alert';
 
 import { animalTitle } from '@/components/AnimalRow';
 import { NotAvailableYet } from '@/components/PhaseScreen';
@@ -76,7 +78,7 @@ export default function AnimalScreen() {
       return Animals.uploadPhoto(farm.id, id, await prepareForUpload(asset.uri, asset.width));
     },
     onSuccess: refresh,
-    onError: (e) => Alert.alert('Foto', e instanceof Error ? e.message : 'Error al subir la foto'),
+    onError: (e) => showAlert('Foto', e instanceof Error ? e.message : 'Error al subir la foto'),
   });
 
   const deactivate = useMutation({
@@ -86,7 +88,7 @@ export default function AnimalScreen() {
       setExitMode(null);
       refresh();
     },
-    onError: (e) => Alert.alert('Baja', e instanceof Error ? e.message : 'Error'),
+    onError: (e) => showAlert('Baja', e instanceof Error ? e.message : 'Error'),
   });
 
   if (q.isLoading) return <Loading />;
@@ -211,7 +213,7 @@ export default function AnimalScreen() {
                 icon="exit"
                 loading={deactivate.isPending}
                 onPress={() =>
-                  Alert.alert('Confirmar baja', 'El animal dejará de contar en el censo activo. El historial se conserva.', [
+                  showAlert('Confirmar baja', 'El animal dejará de contar en el censo activo. El historial se conserva.', [
                     { text: 'Cancelar', style: 'cancel' },
                     { text: 'Dar de baja', style: 'destructive', onPress: () => deactivate.mutate(exitMode) },
                   ])

@@ -1,7 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Image, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
+
+import { showAlert } from '@/lib/alert';
 
 import { AnimalRow } from '@/components/AnimalRow';
 import { Badge, Button, Card, ConfidenceBar, Empty, Notice, Screen, SectionTitle } from '@/components/ui';
@@ -50,7 +52,7 @@ export default function Result() {
       qc.invalidateQueries({ queryKey: ['dashboard', farm.id] });
       router.replace(`/animal/${m.animal.id}`);
     } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo confirmar');
+      showAlert('Error', e instanceof Error ? e.message : 'No se pudo confirmar');
     } finally {
       setSaving(null);
     }

@@ -4,7 +4,9 @@ import { File, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
+
+import { showAlert } from '@/lib/alert';
 
 import { Button, Card, Field, Notice, Options, Row, Screen, SectionTitle } from '@/components/ui';
 import { authHeaders } from '@/lib/api';
@@ -36,13 +38,13 @@ export default function Settings() {
   const groups = useQuery({ queryKey: ['groups', farm.id], queryFn: () => Farms.groups(farm.id) });
   const members = useQuery({ queryKey: ['members', farm.id], queryFn: () => Farms.members(farm.id) });
 
-  const err = (e: unknown) => Alert.alert('Error', e instanceof Error ? e.message : 'Error');
+  const err = (e: unknown) => showAlert('Error', e instanceof Error ? e.message : 'Error');
 
   const saveFarm = useMutation({
     mutationFn: () => Farms.update(farm.id, { name: name.trim(), rega_code: rega.trim() || null, province: province.trim() || null }),
     onSuccess: async () => {
       await reloadFarms();
-      Alert.alert('Guardado', 'Datos de la explotación actualizados');
+      showAlert('Guardado', 'Datos de la explotación actualizados');
     },
     onError: err,
   });
@@ -66,6 +68,17 @@ export default function Settings() {
   const exportFile = async (format: 'csv' | 'xlsx') => {
     setBusy(format);
     try {
+      if (Platform.OS === 'web') {
+        const r = await fetch(`${API_URL}${API_PREFIX}/farms/${farm.id}/animals/export?format=${format}`, { headers: authHeaders() });
+        if (!r.ok) throw new Error(`Error ${r.status} al exportar`);
+        const url = URL.createObjectURL(await r.blob());
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `animales_${farm.name.replace(/\W+/g, '_')}.${format}`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        return;
+      }
       const dest = new File(Paths.cache, `animales_${farm.name.replace(/\W+/g, '_')}.${format}`);
       const f = await File.downloadFileAsync(`${API_URL}${API_PREFIX}/farms/${farm.id}/animals/export?format=${format}`, dest, {
         headers: authHeaders(),
@@ -91,7 +104,7 @@ export default function Settings() {
     if (!file) return;
     setBusy('import');
     try {
-      const rep = await Animals.importFile(farm.id, file.uri, file.name, file.mimeType ?? 'text/csv', true);
+      const rep = await Animals.importFile(farm.id, file.uri, file.name, file.mimeType ?? 'text/csv', true, file.file);
       setReport({ r: rep, file });
     } catch (e) {
       err(e);
@@ -104,12 +117,12 @@ export default function Settings() {
     if (!report) return;
     setBusy('import');
     try {
-      const rep = await Animals.importFile(farm.id, report.file.uri, report.file.name, report.file.mimeType ?? 'text/csv', false);
+      const rep = await Animals.importFile(farm.id, report.file.uri, report.file.name, report.file.mimeType ?? 'text/csv', false, report.file.file);
       setReport(null);
       qc.invalidateQueries({ queryKey: ['animals', farm.id] });
       qc.invalidateQueries({ queryKey: ['dashboard', farm.id] });
       await syncAnimals(farm.id).catch(() => undefined);
-      Alert.alert('Importación completada', `${rep.created} animales creados${rep.errors.length ? `, ${rep.errors.length} filas con errores` : ''}.`);
+      showAlert('Importación completada', `${rep.created} animales creados${rep.errors.length ? `, ${rep.errors.length} filas con errores` : ''}.`);
     } catch (e) {
       err(e);
     } finally {
@@ -143,7 +156,7 @@ export default function Settings() {
                     variant="ghost"
                     compact
                     onPress={() =>
-                      Alert.alert('Borrar lote', `Los animales de "${g.name}" quedarán sin lote.`, [
+                      showAlert('Borrar lote', `Los animales de "${g.name}" quedarán sin lote.`, [
                         { text: 'Cancelar', style: 'cancel' },
                         { text: 'Borrar', style: 'destructive', onPress: () => Farms.deleteGroup(farm.id, g.id).then(() => qc.invalidateQueries({ queryKey: ['groups', farm.id] })).catch(err) },
                       ])

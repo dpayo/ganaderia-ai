@@ -4,7 +4,9 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+
+import { showAlert } from '@/lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, Screen, Title } from '@/components/ui';
@@ -46,7 +48,7 @@ export default function CameraScreen() {
       router.replace('/identify/result');
     } catch (e) {
       const offline = e instanceof ApiError && e.isNetwork;
-      Alert.alert(
+      showAlert(
         offline ? 'Sin conexión' : 'No se pudo procesar',
         offline
           ? 'La lectura automática del crotal necesita conexión. Puedes escribir el número y buscarlo en los datos guardados en el móvil.'
@@ -68,7 +70,7 @@ export default function CameraScreen() {
       const pic = await camera.current.takePictureAsync({ quality: 0.9, exif: false });
       if (pic) await process(pic.uri, pic.width);
     } catch {
-      Alert.alert('Cámara', 'No se pudo hacer la foto. Inténtalo de nuevo.');
+      showAlert('Cámara', 'No se pudo hacer la foto. Inténtalo de nuevo.');
     }
   };
 

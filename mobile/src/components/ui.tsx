@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import type { ComponentProps, ReactNode } from 'react';
+import { type ComponentProps, type ReactNode, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -14,6 +14,7 @@ import {
   type TextInputProps,
   View,
   type ViewStyle,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -304,7 +305,31 @@ export function AuthImage({ path, style }: { path: string | null | undefined; st
       </View>
     );
   }
+  if (Platform.OS === 'web') return <WebAuthImage url={absoluteUrl(path)} style={style} />;
   return <Image source={{ uri: absoluteUrl(path), headers: authHeaders() }} style={style} resizeMode="cover" />;
+}
+
+/** En el navegador <img> no puede enviar la cabecera Authorization: se descarga con fetch y se muestra como blob. */
+function WebAuthImage({ url, style }: { url: string; style: StyleProp<ImageStyle> }) {
+  const t = useTheme();
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    let obj: string | null = null;
+    fetch(url, { headers: authHeaders() })
+      .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+      .then((b) => {
+        obj = URL.createObjectURL(b);
+        if (alive) setSrc(obj);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+      if (obj) URL.revokeObjectURL(obj);
+    };
+  }, [url]);
+  if (!src) return <View style={[style as StyleProp<ViewStyle>, { backgroundColor: t.surfaceAlt }]} />;
+  return <Image source={{ uri: src }} style={style} resizeMode="cover" />;
 }
 
 export function ConfidenceBar({ value }: { value: number }) {

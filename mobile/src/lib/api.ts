@@ -1,6 +1,7 @@
-import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 import { API_PREFIX, API_URL } from './config';
+import { deleteItem, getItem, setItem } from './storage';
 import type { Tokens } from './types';
 
 const TOKENS_KEY = 'ganaderia.tokens';
@@ -24,15 +25,15 @@ let onAuthLost: (() => void) | null = null;
 let refreshing: Promise<boolean> | null = null;
 
 export async function loadTokens(): Promise<Tokens | null> {
-  const raw = await SecureStore.getItemAsync(TOKENS_KEY);
+  const raw = await getItem(TOKENS_KEY);
   tokens = raw ? (JSON.parse(raw) as Tokens) : null;
   return tokens;
 }
 
 export async function setTokens(t: Tokens | null): Promise<void> {
   tokens = t;
-  if (t) await SecureStore.setItemAsync(TOKENS_KEY, JSON.stringify(t));
-  else await SecureStore.deleteItemAsync(TOKENS_KEY);
+  if (t) await setItem(TOKENS_KEY, JSON.stringify(t));
+  else await deleteItem(TOKENS_KEY);
 }
 
 export function setOnAuthLost(cb: (() => void) | null): void {
@@ -143,11 +144,23 @@ function safeJson(text: string): unknown {
   }
 }
 
-/** FormData con una imagen local (file://) para subir. */
-export function imageForm(uri: string, fields: Record<string, string> = {}): FormData {
+/**
+ * Añade un fichero local a un FormData. En el móvil React Native acepta { uri, name, type };
+ * en el navegador la uri es blob:/data: y hay que convertirla en Blob.
+ */
+export async function appendFile(fd: FormData, uri: string, name: string, type: string, webFile?: Blob): Promise<void> {
+  if (Platform.OS === 'web') {
+    const blob = webFile ?? (await (await fetch(uri)).blob());
+    fd.append('file', blob, name);
+  } else {
+    fd.append('file', { uri, name, type } as unknown as Blob);
+  }
+}
+
+/** FormData con una imagen local para subir. */
+export async function imageForm(uri: string, fields: Record<string, string> = {}): Promise<FormData> {
   const fd = new FormData();
-  // React Native acepta { uri, name, type } como fichero en FormData.
-  fd.append('file', { uri, name: 'photo.jpg', type: 'image/jpeg' } as unknown as Blob);
+  await appendFile(fd, uri, 'photo.jpg', 'image/jpeg');
   for (const [k, v] of Object.entries(fields)) fd.append(k, v);
   return fd;
 }

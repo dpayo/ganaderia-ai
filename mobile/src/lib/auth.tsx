@@ -1,9 +1,9 @@
-import * as SecureStore from 'expo-secure-store';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { loadTokens, setOnAuthLost, setTokens } from './api';
 import { Auth, Farms } from './endpoints';
 import { clearCache } from './offline';
+import { deleteItem, getItem, setItem } from './storage';
 import type { Farm, User } from './types';
 
 const FARM_KEY = 'ganaderia.farm';
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const reloadFarms = useCallback(async () => {
     const list = await Farms.list();
     setFarms(list);
-    const saved = await SecureStore.getItemAsync(FARM_KEY);
+    const saved = await getItem(FARM_KEY);
     const chosen = list.find((f) => f.id === saved) ?? list[0] ?? null;
     setFarmId(chosen?.id ?? null);
     return list;
@@ -78,12 +78,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       logout: async () => {
         await setTokens(null);
-        await SecureStore.deleteItemAsync(FARM_KEY);
+        await deleteItem(FARM_KEY);
         await clearCache();
         reset();
       },
       selectFarm: async (id) => {
-        await SecureStore.setItemAsync(FARM_KEY, id);
+        await setItem(FARM_KEY, id);
         setFarmId(id);
       },
       reloadFarms,
